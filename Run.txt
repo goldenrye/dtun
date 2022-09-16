@@ -1,0 +1,25 @@
+
+topology:
+========
+
+    +-----+veth1  veth0+--------+tun0   DTUN    tun0+--------+veth1   veth0 +-----+
+    | ns0 |<>--------<>| kernel |<>===============<>| kernel |<>----------<>| ns0 |
+    +-----+            +--------+                   +--------+              +-----+
+    192.168.0.2  192.168.0.1   10.0.0.x       10.0.0.1      10.0.1.1   10.0.1.2
+
+    |-------- 172.16.0.9 -------|                   |-------- 172.16.0.23 --------|
+
+
+server:
+=======
+> cd cmd/dtun
+> sudo /usr/local/go/bin/go run main.go -key "qazw1234" -listen 172.16.0.23:20000
+
+client:
+=======
+> cd cmd/dtun
+> sudo /usr/local/go/bin/go run main.go -connect 172.16.0.23:20000 -key "qazw1234"  -peernet 192.168.0.0/24 -up "/home/ubuntu/Projects/dtun/client_route.sh"
+
+test:
+=====
+from client run command: sudo ip netns exec ns0 ping 10.0.1.2
