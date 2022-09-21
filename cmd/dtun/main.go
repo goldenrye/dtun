@@ -12,8 +12,11 @@ import (
 	"sync"
 	"syscall"
 	"time"
+    "crypto/x509"
+    "crypto/tls"
 
 	"github.com/pion/dtls/v2"
+	"github.com/pion/dtls/v2/examples/util"
 	"github.com/taoso/dtun"
 	"inet.af/netaddr"
 )
@@ -50,6 +53,27 @@ func main() {
 var tun *dtun.TUN
 
 func dialTUN() {
+
+
+    certificate, err := util.LoadKeyAndCertificate("/tmp/certs/server-key.pem",
+        "/tmp/certs/server-cert.pem")
+    util.Check(err)
+
+    rootCertificate, err := util.LoadCertificate("/tmp/certs/ca-cert.pem")
+    util.Check(err)
+    certPool := x509.NewCertPool()
+    cert, err := x509.ParseCertificate(rootCertificate.Certificate[0])
+    util.Check(err)
+    certPool.AddCert(cert)
+
+    // Prepare the configuration of the DTLS connection
+    config := &dtls.Config{
+        Certificates:         []tls.Certificate{certificate},
+        ExtendedMasterSecret: dtls.RequireExtendedMasterSecret,
+        RootCAs:              certPool,
+    }
+
+/*
 	config := &dtls.Config{
 		PSK: func(hint []byte) ([]byte, error) {
 			log.Printf("Server's hint: %s \n", string(hint))
@@ -58,7 +82,7 @@ func dialTUN() {
 		PSKIdentityHint: []byte(id),
 		CipherSuites:    []dtls.CipherSuiteID{dtls.TLS_PSK_WITH_AES_128_CCM_8},
 	}
-
+*/
 	addr, err := net.ResolveUDPAddr("udp", connect)
 	if err != nil {
 		panic(err)
@@ -85,11 +109,16 @@ dial:
 		goto loop
 	}
 
-	var m dtun.Meta
+	//var m dtun.Meta
+    m := dtun.Meta{Local4: "10.0.0.2",
+        Peer4: "10.0.0.1",
+        Local6: "fc00::2",
+        Peer6: "fc00::1"}
+    /*
 	if err := m.Read(c); err != nil {
 		log.Println("Meta Read error", err)
 		goto loop
-	}
+	}*/
 
 	local4, err := netaddr.ParseIP(m.Local4)
 	if err != nil {
@@ -111,16 +140,19 @@ dial:
 		log.Println("parse peer6 error", err)
 		goto loop
 	}
-
+    log.Println("create tunnel interface")
 	tun = dtun.NewTUN(c, local4, peer4, local6, peer6)
 
+    /*
 	r := dtun.Meta{Routes: peernet}
 
+    log.Println("send meta ")
 	if err = r.Send(c); err != nil {
 		log.Println("Meta Send error", err)
 		goto loop
 	}
-
+    */
+    log.Println("execute up script ")
 	if up != "" {
 		cmd := exec.Command(up)
 		cmd.Env = []string{
@@ -137,19 +169,23 @@ dial:
 		}
 	}
 
+    log.Println("start forwarding ")
 	var wg sync.WaitGroup
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
 		buf := make([]byte, dtun.MTU)
 		io.CopyBuffer(c, tun.Tun, buf)
+        log.Println("exit go fun ")
 	}()
 
 	buf := make([]byte, dtun.MTU)
 	io.CopyBuffer(tun.Tun, c, buf)
 	tun.Close()
 
+    log.Println("close tun ")
 	wg.Wait()
+    log.Println("exit main ")
 	goto loop
 }
 
