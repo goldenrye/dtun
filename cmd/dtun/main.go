@@ -39,10 +39,6 @@ func init() {
 func main() {
 	flag.Parse()
 
-	if key == "" {
-		panic("key is required")
-	}
-
 	if connect != "" {
 		dialTUN()
 	} else {
