@@ -18,8 +18,8 @@ bgw server:
 client:
 =======
 > cd cmd/dtun
-> sudo /usr/local/go/bin/go run main.go -connect 172.16.0.23:20000 -up "/home/ubuntu/Projects/dtun/script/client_route.sh"
+> sudo /usr/local/go/bin/go run cmd/dtun/main.go -connect 172.16.0.23:20000 -user jpi@lookout.com -token 123456 -up "/home/ubuntu/Projects/dtun/script/client_route.sh"
 
 test:
 =====
-from client run command: sudo ip netns exec ns0 ping 34.160.111.145
+from client run command: sudo ip netns exec ns0 ping 172.16.0.180

@@ -50,6 +50,9 @@ type Meta struct {
 	Local6 string
 	Peer6  string
 	Routes string
+    User   string
+    Token  string
+    Auth   bool
 }
 
 func (m *Meta) Read(c io.Reader) error {

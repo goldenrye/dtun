@@ -24,6 +24,7 @@ import (
 var listen, connect, key, id string
 var peernet, up string
 var pool6, pool4 string
+var user, token string
 
 func init() {
 	flag.StringVar(&listen, "listen", "0.0.0.0:443", "server listen address(server)")
@@ -34,6 +35,8 @@ func init() {
 	flag.StringVar(&up, "up", "", "client up script")
 	flag.StringVar(&key, "key", "", "pre-shared key(psk)")
 	flag.StringVar(&id, "id", "dtun", "psk hint")
+	flag.StringVar(&user, "user", "", "user name")
+	flag.StringVar(&token, "token", "", "token")
 }
 
 func main() {
@@ -98,7 +101,7 @@ func dialTUN() {
 loop:
 	time.Sleep(5 * time.Second)
 dial:
-	log.Println("dialing to", addr)
+	log.Println("dialing to", addr, "port", addr.Port)
 	c, err := dtls.Dial("udp", addr, config)
 	if err != nil {
 		log.Println("Dial error", err)
@@ -106,15 +109,11 @@ dial:
 	}
 
 	//var m dtun.Meta
-    m := dtun.Meta{Local4: "10.0.0.2",
+    m := dtun.Meta{
+        Local4: "10.0.0.2",
         Peer4: "10.0.0.1",
         Local6: "fc00::2",
         Peer6: "fc00::1"}
-    /*
-	if err := m.Read(c); err != nil {
-		log.Println("Meta Read error", err)
-		goto loop
-	}*/
 
 	local4, err := netaddr.ParseIP(m.Local4)
 	if err != nil {
@@ -139,15 +138,40 @@ dial:
     log.Println("create tunnel interface")
 	tun = dtun.NewTUN(c, local4, peer4, local6, peer6)
 
-    /*
-	r := dtun.Meta{Routes: peernet}
+	r := dtun.Meta{
+        User: user,
+        Token: token,
+    }
 
-    log.Println("send meta ")
+    log.Println("send user_id/token ")
 	if err = r.Send(c); err != nil {
 		log.Println("Meta Send error", err)
 		goto loop
 	}
-    */
+
+    if err := m.Read(c); err != nil {
+        log.Println("Meta read error", err)
+        goto loop
+    }
+    if m.Auth != true {
+        log.Println("User_id and token doesn't match")
+	    for {
+            time.Sleep(5 * time.Second)
+        }
+    }
+
+    log.Println("User_id and token validation succeed, create the data tunnel")
+    data_addr := net.UDPAddr{
+        IP:   addr.IP,
+        Port: addr.Port+1,
+        Zone: addr.Zone,
+    }
+	data_c, err := dtls.Dial("udp", &data_addr, config)
+	if err != nil {
+		log.Println("Dial error", err)
+		goto loop
+	}
+
     log.Println("execute up script ")
 	if up != "" {
 		cmd := exec.Command(up)
@@ -171,12 +195,12 @@ dial:
 	go func() {
 		defer wg.Done()
 		buf := make([]byte, dtun.MTU)
-		io.CopyBuffer(c, tun.Tun, buf)
+		io.CopyBuffer(data_c, tun.Tun, buf)
         log.Println("exit go fun ")
 	}()
 
 	buf := make([]byte, dtun.MTU)
-	io.CopyBuffer(tun.Tun, c, buf)
+	io.CopyBuffer(tun.Tun, data_c, buf)
 	tun.Close()
 
     log.Println("close tun ")
