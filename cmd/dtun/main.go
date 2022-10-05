@@ -54,8 +54,8 @@ var tun *dtun.TUN
 func dialTUN() {
 
 
-    certificate, err := util.LoadKeyAndCertificate("/tmp/certs/server-key.pem",
-        "/tmp/certs/server-cert.pem")
+    certificate, err := util.LoadKeyAndCertificate("/tmp/certs/client-key.pem",
+        "/tmp/certs/client-cert.pem")
     util.Check(err)
 
     rootCertificate, err := util.LoadCertificate("/tmp/certs/ca-cert.pem")
