@@ -15,8 +15,8 @@ import (
     "crypto/x509"
     "crypto/tls"
 
-	"github.com/pion/dtls/v2"
-	"github.com/pion/dtls/v2/examples/util"
+	"github.com/goldenrye/dtls"
+	"github.com/goldenrye/dtls/examples/util"
 	"github.com/taoso/dtun"
 	"inet.af/netaddr"
 )
@@ -160,7 +160,7 @@ dial:
         }
     }
 
-    log.Println("User_id and token validation succeed, create the data tunnel")
+    log.Println("User_id and token validation succeed, create the data tunnel with cookie:", m.Cookie)
     data_addr := net.UDPAddr{
         IP:   addr.IP,
         Port: addr.Port+1,
