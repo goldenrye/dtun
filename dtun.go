@@ -53,7 +53,7 @@ type Meta struct {
     User   string
     Token  string
     Auth   bool
-    Cookie uint
+    Cookie uint32
 }
 
 func (m *Meta) Read(c io.Reader) error {
