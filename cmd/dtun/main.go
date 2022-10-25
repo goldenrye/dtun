@@ -14,9 +14,10 @@ import (
 	"time"
     "crypto/x509"
     "crypto/tls"
+    "encoding/binary"
 
-	"github.com/pion/dtls/v2"
-	"github.com/pion/dtls/v2/examples/util"
+	"github.com/goldenrye/dtls"
+	"github.com/goldenrye/dtls/examples/util"
 	"github.com/taoso/dtun"
 	"inet.af/netaddr"
 )
@@ -160,7 +161,9 @@ dial:
         }
     }
 
-    log.Println("User_id and token validation succeed, create the data tunnel")
+    dtls.Cookie = make([]byte, 4)
+    log.Printf("User_id and token validation succeed, create the data tunnel with cookie: 0x%x\n", m.Cookie)
+    binary.BigEndian.PutUint32(dtls.Cookie, m.Cookie)
     data_addr := net.UDPAddr{
         IP:   addr.IP,
         Port: addr.Port+1,

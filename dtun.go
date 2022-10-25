@@ -8,7 +8,7 @@ import (
 	"os"
 	"os/exec"
 
-	"github.com/pion/dtls/v2"
+	"github.com/goldenrye/dtls"
 	"github.com/songgao/water"
 	"inet.af/netaddr"
 )
@@ -53,6 +53,7 @@ type Meta struct {
     User   string
     Token  string
     Auth   bool
+    Cookie uint32
 }
 
 func (m *Meta) Read(c io.Reader) error {
