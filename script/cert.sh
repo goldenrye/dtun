@@ -24,6 +24,7 @@ $OPENSSL_BIN req -nodes -new -newkey rsa:2048 -keyout client-key.pem -out client
 $OPENSSL_BIN ca -config $SCRIPT_DIR/ca.conf -days 365 -in client.csr -out client-cert.pem
 
 mkdir -p certs/
+rm -fr certs/*
 cp ca-cert.pem certs/
 cp ca-key.pem certs/
 cp client-cert.pem certs/
