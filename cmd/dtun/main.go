@@ -26,6 +26,7 @@ var listen, connect, key, id string
 var peernet, up string
 var pool6, pool4 string
 var user, token string
+var proto string
 
 func init() {
 	flag.StringVar(&listen, "listen", "0.0.0.0:443", "server listen address(server)")
@@ -38,6 +39,7 @@ func init() {
 	flag.StringVar(&id, "id", "dtun", "psk hint")
 	flag.StringVar(&user, "user", "", "user name")
 	flag.StringVar(&token, "token", "", "token")
+    flag.StringVar(&proto, "proto", "udp", "tcp/udp")
 }
 
 func main() {
@@ -53,7 +55,9 @@ func main() {
 var tun *dtun.TUN
 
 func dialTUN() {
-
+    var err error
+    var tls_c *tls.Conn
+    var dtls_c *dtls.Conn
 
     certificate, err := util.LoadKeyAndCertificate("/tmp/certs/client-key.pem",
         "/tmp/certs/client-cert.pem")
@@ -67,22 +71,18 @@ func dialTUN() {
     certPool.AddCert(cert)
 
     // Prepare the configuration of the DTLS connection
-    config := &dtls.Config{
+    dtls_config := &dtls.Config{
         Certificates:         []tls.Certificate{certificate},
         ExtendedMasterSecret: dtls.RequireExtendedMasterSecret,
         RootCAs:              certPool,
     }
 
-/*
-	config := &dtls.Config{
-		PSK: func(hint []byte) ([]byte, error) {
-			log.Printf("Server's hint: %s \n", string(hint))
-			return []byte(key), nil
-		},
-		PSKIdentityHint: []byte(id),
-		CipherSuites:    []dtls.CipherSuiteID{dtls.TLS_PSK_WITH_AES_128_CCM_8},
-	}
-*/
+    tls_config := &tls.Config {
+        ServerName:           "sse.lookout.com",
+        Certificates:         []tls.Certificate{certificate},
+        RootCAs:              certPool,
+    }
+
 	addr, err := net.ResolveUDPAddr("udp", connect)
 	if err != nil {
 		panic(err)
@@ -102,8 +102,12 @@ func dialTUN() {
 loop:
 	time.Sleep(5 * time.Second)
 dial:
-	log.Println("dialing to", addr, "port", addr.Port)
-	c, err := dtls.Dial("udp", addr, config)
+	log.Println("dialing to", addr, "port", addr.Port, "proto", proto)
+    if proto == "tcp" {
+        tls_c, err = tls.Dial("tcp", connect, tls_config)
+    } else {
+        dtls_c, err = dtls.Dial("udp", addr, dtls_config)
+    }
 	if err != nil {
 		log.Println("Dial error", err)
 		goto loop
@@ -136,8 +140,6 @@ dial:
 		log.Println("parse peer6 error", err)
 		goto loop
 	}
-    log.Println("create tunnel interface")
-	tun = dtun.NewTUN(c, local4, peer4, local6, peer6)
 
 	r := dtun.Meta{
         User: user,
@@ -145,14 +147,26 @@ dial:
     }
 
     log.Println("send user_id/token ")
-	if err = r.Send(c); err != nil {
-		log.Println("Meta Send error", err)
-		goto loop
-	}
+    if proto == "tcp" {
+         if err = r.Send(tls_c); err != nil {
+            log.Println("Meta Send error", err)
+            goto loop
+        }
 
-    if err := m.Read(c); err != nil {
-        log.Println("Meta read error", err)
-        goto loop
+        if err := m.Read(tls_c); err != nil {
+            log.Println("Meta read error", err)
+            goto loop
+        }
+   } else {
+        if err = r.Send(dtls_c); err != nil {
+            log.Println("Meta Send error", err)
+            goto loop
+        }
+
+        if err := m.Read(dtls_c); err != nil {
+            log.Println("Meta read error", err)
+            goto loop
+        }
     }
     if m.Auth != true {
         log.Println("User_id and token doesn't match")
@@ -166,14 +180,17 @@ dial:
     binary.BigEndian.PutUint32(dtls.Cookie, m.Cookie)
     data_addr := net.UDPAddr{
         IP:   addr.IP,
-        Port: addr.Port+1,
+        Port: 20001,
         Zone: addr.Zone,
     }
-	data_c, err := dtls.Dial("udp", &data_addr, config)
+	data_c, err := dtls.Dial("udp", &data_addr, dtls_config)
 	if err != nil {
 		log.Println("Dial error", err)
 		goto loop
 	}
+
+    log.Println("create tunnel interface")
+	tun = dtun.NewTUN(data_c, local4, peer4, local6, peer6)
 
     log.Println("execute up script ")
 	if up != "" {

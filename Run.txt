@@ -12,14 +12,27 @@ topology:
 
 
 bgw server:
-==========
+===========
 > run_bgw.sh
+
+if control channel running in slow-path
+> cd SSL-TLS-clientserver (https://github.com/goldenrye/SSL-TLS-clientserver.git branch sse)
+> ./server
+
 
 client:
 =======
-> cd cmd/dtun
+> cd dtun (https://github.com/goldenrye/dtun.git branch 6wind)
+
+for both control/data channel running in fast-path
 > sudo /usr/local/go/bin/go run cmd/dtun/main.go -connect 172.16.0.23:20000 -user jpi@lookout.com -token 123456 -up "/home/ubuntu/Projects/dtun/script/client_route.sh"
+
+for control channel running in slow-path, data channel running in fast-path
+> sudo /usr/local/go/bin/go run cmd/dtun/main.go -connect 172.16.0.23:5000 -user jpi@lookout.com -token 123456 -up "/home/ubuntu/Projects/dtun/script/client_route.sh" -proto tcp
 
 test:
 =====
-from client run command: sudo ip netns exec ns0 ping 172.16.0.180
+from client
+sudo ip netns exec ns0 bash
+ping 172.16.0.180
+ssh -i /home/ubuntu/bgw-dev-kp1.pem ubuntu@172.16.0.180
