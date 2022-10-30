@@ -7,6 +7,8 @@ import (
 	"net"
 	"os"
 	"os/exec"
+    "encoding/binary"
+    "bytes"
 
 	"github.com/goldenrye/dtls"
 	"github.com/songgao/water"
@@ -50,9 +52,9 @@ type Meta struct {
 	Local6 string
 	Peer6  string
 	Routes string
-    User   string
-    Token  string
-    Auth   bool
+    User_id string
+    OTP    string
+    Auth   string
     Cookie uint32
 }
 
@@ -63,7 +65,7 @@ func (m *Meta) Read(c io.Reader) error {
 		return err
 	}
 
-	return json.Unmarshal(buf[:n], m)
+	return json.Unmarshal(buf[8:n], m)
 }
 
 func (m *Meta) Send(c io.Writer) error {
@@ -71,7 +73,28 @@ func (m *Meta) Send(c io.Writer) error {
 	if err != nil {
 		return err
 	}
-	_, err = c.Write(b)
+
+    hdr := new(bytes.Buffer)
+    var data = []any{
+        uint32(0xfeedface),
+        uint8(0),
+        uint8(0x4),
+        uint16(len(b)),
+    }
+    for _, v := range data {
+        err := binary.Write(hdr, binary.BigEndian, v)
+        if err != nil {
+            log.Println("binary.Write failed:", err)
+        }
+    }
+    new_b := []byte{}
+    for _, v := range hdr.Bytes() {
+        new_b = append(new_b, v)
+    }
+    for _, v := range b {
+        new_b = append(new_b, v)
+    }
+	_, err = c.Write(new_b)
 	return err
 }
 

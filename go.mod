@@ -3,7 +3,7 @@ module github.com/taoso/dtun
 go 1.19
 
 require (
-	github.com/goldenrye/dtls v0.0.0-20221009175959-a53afcba48cf
+	github.com/goldenrye/dtls v0.0.0-20221030120906-5804fe085530
 	github.com/songgao/water v0.0.0-20200317203138-2b4b6d7c09d8
 	inet.af/netaddr v0.0.0-20220811202034-502d2d690317
 )

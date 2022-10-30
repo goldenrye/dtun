@@ -5,6 +5,8 @@ github.com/goldenrye/dtls v0.0.0-20221007023039-5bc3aa4e5992 h1:HGSjTcADarISWSsG
 github.com/goldenrye/dtls v0.0.0-20221007023039-5bc3aa4e5992/go.mod h1:EROwGf40ULyzGzRhsHZufjj+rUQKTtvKcV1jyxPVJII=
 github.com/goldenrye/dtls v0.0.0-20221009175959-a53afcba48cf h1:U2UcTxiKslqnrc2QRz4QDZL7n7ngkMmX4Rc6++3b+AI=
 github.com/goldenrye/dtls v0.0.0-20221009175959-a53afcba48cf/go.mod h1:EROwGf40ULyzGzRhsHZufjj+rUQKTtvKcV1jyxPVJII=
+github.com/goldenrye/dtls v0.0.0-20221030120906-5804fe085530 h1:/OIPFt7oSHVGQmzmYdZF2+PKtNYwR9mUkNjNq1NfERQ=
+github.com/goldenrye/dtls v0.0.0-20221030120906-5804fe085530/go.mod h1:EROwGf40ULyzGzRhsHZufjj+rUQKTtvKcV1jyxPVJII=
 github.com/pion/logging v0.2.2 h1:M9+AIj/+pxNsDfAT64+MAVgJO0rsyLnoJKCqf//DoeY=
 github.com/pion/logging v0.2.2/go.mod h1:k0/tDVsRCX2Mb2ZEmTqNa7CWsQPc+YYCB7Q+5pahoms=
 github.com/pion/transport v0.12.2/go.mod h1:N3+vZQD9HlDP5GWkZ85LohxNsDcNgofQmyL6ojX5d8Q=
