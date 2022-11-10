@@ -53,6 +53,10 @@ type Meta struct {
 	Peer6  string
 	Routes string
     User_id string
+    Tenant_id string
+    Tunnel_type string
+    ZTNA_env string
+    Device_id string
     OTP    string
     Auth   string
     Cookie uint32

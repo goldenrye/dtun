@@ -25,19 +25,23 @@ import (
 var listen, connect, key, id string
 var peernet, up string
 var pool6, pool4 string
-var user_id, otp string
+var user_id, tenant_id, env_id, device_id, tunnel_type, otp string
 var proto string
 
 func init() {
 	flag.StringVar(&listen, "listen", "0.0.0.0:443", "server listen address(server)")
 	flag.StringVar(&pool6, "pool6", "fc00::/120", "client ipv6 pool(server)")
-	flag.StringVar(&pool4, "pool4", "10.0.0.0/24", "client ipv4 pool(server)")
+	flag.StringVar(&pool4, "pool4", "100.64.0.0/24", "client ipv4 pool(server)")
 	flag.StringVar(&connect, "connect", "", "server address(client)")
 	flag.StringVar(&peernet, "peernet", "empty", "client local ipv4 network")
 	flag.StringVar(&up, "up", "", "client up script")
 	flag.StringVar(&key, "key", "", "pre-shared key(psk)")
 	flag.StringVar(&id, "id", "dtun", "psk hint")
 	flag.StringVar(&user_id, "user_id", "", "user id")
+	flag.StringVar(&tenant_id, "tenant_id", "", "tenant id")
+	flag.StringVar(&env_id, "env_id", "", "env id")
+	flag.StringVar(&device_id, "device_id", "", "device id")
+	flag.StringVar(&tunnel_type, "tunnel_type", "", "tunnel type-SWG/ZTNA")
 	flag.StringVar(&otp, "otp", "", "otp")
     flag.StringVar(&proto, "proto", "udp", "tcp/udp")
 }
@@ -64,6 +68,7 @@ func dialTUN() {
     util.Check(err)
 
     rootCertificate, err := util.LoadCertificate("/tmp/certs/ca-cert.pem")
+//    rootCertificate, err := util.LoadCertificate("/usr/share/ca-certificates/mozilla/GlobalSign_Root_CA.crt")
     util.Check(err)
     certPool := x509.NewCertPool()
     cert, err := x509.ParseCertificate(rootCertificate.Certificate[0])
@@ -75,6 +80,7 @@ func dialTUN() {
         Certificates:         []tls.Certificate{certificate},
         ExtendedMasterSecret: dtls.RequireExtendedMasterSecret,
         RootCAs:              certPool,
+        MTU:                  1000,
     }
 
     tls_config := &tls.Config {
@@ -115,8 +121,8 @@ dial:
 
 	//var m dtun.Meta
     m := dtun.Meta{
-        Local4: "10.0.0.2",
-        Peer4: "10.0.0.1",
+        Local4: "100.66.0.1",
+        Peer4: "100.66.0.2",
         Local6: "fc00::2",
         Peer6: "fc00::1"}
 
@@ -143,6 +149,10 @@ dial:
 
 	r := dtun.Meta{
         User_id: user_id,
+        Tenant_id: tenant_id,
+        Tunnel_type: tunnel_type,
+        ZTNA_env: env_id,
+        Device_id: device_id,
         OTP: otp,
     }
 
@@ -173,6 +183,11 @@ dial:
 	    for {
             time.Sleep(5 * time.Second)
         }
+    }
+
+    if m.Auth == "retry" {
+        log.Println("validation succeed but tenant not ready, retry")
+        goto loop
     }
 
     dtls.Cookie = make([]byte, 4)

@@ -15,20 +15,12 @@ bgw server:
 ===========
 > run_bgw.sh
 
-if control channel running in slow-path
-> cd SSL-TLS-clientserver (https://github.com/goldenrye/SSL-TLS-clientserver.git branch sse)
-> ./server
-
-
 client:
 =======
-> cd dtun (https://github.com/goldenrye/dtun.git branch 6wind)
-
-for both control/data channel running in fast-path
-> sudo /usr/local/go/bin/go run cmd/dtun/main.go -connect 172.16.0.23:20000 -user jpi@lookout.com -token 123456 -up "/home/ubuntu/Projects/dtun/script/client_route.sh"
-
-for control channel running in slow-path, data channel running in fast-path
-> sudo /usr/local/go/bin/go run cmd/dtun/main.go -connect 172.16.0.23:5000 -user jpi@lookout.com -token 123456 -up "/home/ubuntu/Projects/dtun/script/client_route.sh" -proto tcp
+> git clone -b release https://github.com/goldenrye/dtun.git
+> go get github.com/goldenrye/dtls@release
+> cd dtun
+sudo /usr/local/go/bin/go run cmd/dtun/main.go -connect 3.143.92.168:4500 -otp LookoutMacosGartnerDemoOnNov15 -user_id jpi@lookout.com -tenant_id dqtdc2 -tunnel_type SWG -env_id 0 -device_id jpi-pc -up "/home/ubuntu/Projects/dtun/script/client_route.sh"
 
 test:
 =====
